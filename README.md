@@ -1,6 +1,12 @@
-TKA Modul 1
+# TKA Modul 1
 
 Question Source: [Cloud Computing Practicum Module 1](https://docs.google.com/document/d/1vnD6l0r7BPj8p0vqhMG14pTPug0mWu37NKeGqQIT6w8/edit?tab=t.0)
+
+Group Members:
+
+1. Adiwidya @Riverzn
+2. Prabaswara @zostradamus
+3. Zelig @zelebwr
 
 # Soal 1
 
