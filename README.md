@@ -11,6 +11,115 @@ Group Members:
 # Soal 1
 
 # Soal 2
+Nomer 2 ini menyiapkan lingkungan database server berbasis container Docker yang berjalan di atas sistem operasi Debian 10. Server database ini digunakan oleh tim riset NERV untuk menyimpan dan mengelola data para pilot Evangelion.
+
+| Komponen | Detail |
+|---|---|
+| Base OS | Debian 10 (Buster) |
+| Hostname | `database-shinji` |
+| Database | MariaDB Server 10.3 |
+| CPU Limit | 2 vCPU |
+| RAM Limit | 2048 MB |
+| Volume Mount | `./data` → `/var/data/db` |
+
+## Struktur Folder
+```
+nerv-database/
+├── Dockerfile           # Konfigurasi image container
+├── docker-compose.yml   # Konfigurasi resource, volume, dan jaringan
+└── data/                # Direktori host yang di-mount ke /var/data/db di container
+```
+
+## Langkah Pengerjaan
+### Prerequisites
+- Windows 10/11
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) sudah terinstall dan **running**
+- WSL2 sudah aktif
+
+### 1. Buat Struktur Folder
+```powershell
+cd $HOME\Documents
+mkdir nerv-database
+cd nerv-database
+mkdir data
+```
+
+### 2. Buat `Dockerfile`
+```dockerfile
+FROM debian:10
+
+ENV HOSTNAME=database-shinji
+
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.debian.org|http://archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+    sed -i '/buster-updates/d' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y mariadb-server && \
+    apt-get clean
+
+RUN mkdir -p /var/data/db
+
+EXPOSE 3306
+
+CMD mysqld_safe
+```
+
+### 3. Buat `docker-compose.yml`
+```yaml
+services:
+  database-shinji:
+    build: .
+    container_name: database-shinji
+    hostname: database-shinji
+    volumes:
+      - ./data:/var/data/db
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+```
+
+### 4. Build & Jalankan Container
+```powershell
+docker-compose build
+docker-compose up -d
+```
+
+### 5. Verifikasi Container
+```powershell
+docker ps
+docker exec -it database-shinji bash
+```
+
+Di dalam container:
+```bash
+service mysql status
+```
+### 6. Buat Database & Tabel
+```bash
+mysql -u root
+```
+```sql
+CREATE DATABASE modul1_[nomor_kelompok]_database;
+USE modul1_[nomor_kelompok]_database;
+
+CREATE TABLE pilot_data (
+    NRP        VARCHAR(20)  NOT NULL PRIMARY KEY,
+    Nama       VARCHAR(100) NOT NULL,
+    Departemen VARCHAR(100) NOT NULL
+);
+
+INSERT INTO pilot_data (NRP, Nama, Departemen) VALUES
+('5027231012', 'Adiwidya Budi Pratama', 'Teknologi Informasi'),
+('5027231047', 'Jonathan Zelig Sutopo', 'Teknologi Informasi');
+('5027231069', 'Prabaswara Febrian Winandika', 'Teknologi Informasi');
+
+SELECT * FROM pilot_data;
+```
 
 # Soal 3
 
