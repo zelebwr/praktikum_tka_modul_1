@@ -104,8 +104,8 @@ service mysql status
 mysql -u root
 ```
 ```sql
-CREATE DATABASE modul1_[nomor_kelompok]_database;
-USE modul1_[nomor_kelompok]_database;
+CREATE DATABASE modul1_B08_database;
+USE modul1_B08_database;
 
 CREATE TABLE pilot_data (
     NRP        VARCHAR(20)  NOT NULL PRIMARY KEY,
