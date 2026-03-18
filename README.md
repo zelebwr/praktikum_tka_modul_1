@@ -10,6 +10,384 @@ Group Members:
 
 # Soal 1
 
+## 📋 Deskripsi Tugas
+
+> *"Markas NERV baru saja mengalami serangan Angel yang merusak sebagian infrastruktur server. Commander Ikari memerintahkan seluruh divisi teknis untuk segera membangun ulang sistem web operasional EVA."*
+
+Tugas ini mensimulasikan pembangunan ulang infrastruktur web menggunakan Docker, dengan dua versi sistem yang berjalan bersamaan:
+- **v1** — Sistem ringan dan cepat berbasis `nginx:latest`
+- **v2** — Sistem robust berbasis `ubuntu:latest` dengan instalasi nginx manual
+
+---
+
+## 📁 Struktur Proyek
+
+```
+eva-project/
+├── v1/
+│   ├── Dockerfile
+│   └── index.html
+└── v2/
+    ├── Dockerfile
+    └── index.html
+```
+
+---
+
+## 🔢 Soal & Penyelesaian
+
+### Soal 1 — Inisialisasi Struktur Proyek
+
+**Deskripsi:** Membuat folder `eva-project` beserta subfolder `v1` dan `v2`.
+
+**Perintah:**
+```bash
+mkdir -p eva-project/v1 eva-project/v2
+```
+
+**Verifikasi:**
+```bash
+find eva-project -type d
+```
+
+**Output:**
+```
+eva-project
+eva-project/v1
+eva-project/v2
+```
+
+---
+
+### Soal 2 — Membuat File `index.html`
+
+**Deskripsi:** Masing-masing folder memiliki `index.html` dengan konten berbeda.
+
+**File `v1/index.html`:**
+```html
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v1 - Lightweight</p>
+</body>
+</html>
+```
+
+**File `v2/index.html`:**
+```html
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v2 - Full System</p>
+</body>
+</html>
+```
+
+**Perintah:**
+```bash
+cat > eva-project/v1/index.html << 'EOF'
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v1 - Lightweight</p>
+</body>
+</html>
+EOF
+
+cat > eva-project/v2/index.html << 'EOF'
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v2 - Full System</p>
+</body>
+</html>
+EOF
+```
+
+---
+
+### Soal 3 — Dockerfile v1 (nginx:latest)
+
+**Deskripsi:** Membuat Dockerfile untuk v1 menggunakan base image `nginx:latest`, menyalin `index.html` ke direktori default nginx, dan expose port 80.
+
+**File `v1/Dockerfile`:**
+```dockerfile
+FROM nginx:latest
+
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80
+```
+
+**Penjelasan:**
+
+| Instruksi | Penjelasan |
+|-----------|-----------|
+| `FROM nginx:latest` | Base image nginx siap pakai |
+| `COPY index.html /usr/share/nginx/html/index.html` | Salin file ke direktori default nginx |
+| `EXPOSE 80` | Buka port 80 di dalam container |
+
+---
+
+### Soal 4 — Dockerfile v2 (ubuntu:latest + nginx manual)
+
+**Deskripsi:** Membuat Dockerfile untuk v2 menggunakan base image `ubuntu:latest`, menginstall nginx secara manual, dan menjalankan nginx di foreground.
+
+**File `v2/Dockerfile`:**
+```dockerfile
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y nginx
+
+COPY index.html /var/www/html/index.html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+**Penjelasan:**
+
+| Instruksi | Penjelasan |
+|-----------|-----------|
+| `FROM ubuntu:latest` | Base image sistem operasi Ubuntu penuh |
+| `RUN apt-get update && apt-get install -y nginx` | Install nginx secara manual |
+| `COPY index.html /var/www/html/index.html` | Salin file ke direktori web nginx Ubuntu |
+| `EXPOSE 80` | Buka port 80 di dalam container |
+| `CMD ["nginx", "-g", "daemon off;"]` | Jalankan nginx di foreground |
+
+**Perbedaan v1 vs v2:**
+
+| | v1 | v2 |
+|---|---|---|
+| Base Image | `nginx:latest` | `ubuntu:latest` |
+| Nginx | Sudah built-in | Di-install manual via `apt-get` |
+| Direktori HTML | `/usr/share/nginx/html/` | `/var/www/html/` |
+| CMD | Tidak perlu | Wajib ditambahkan |
+
+---
+
+### Soal 5 — Build Docker Image
+
+**Deskripsi:** Build kedua image dengan format nama `eva-web-[nomor_kelompok]:v1` dan `eva-web-[nomor_kelompok]:v2`.
+
+**Perintah:**
+```bash
+cd eva-project
+
+# Build image v1
+docker build -t eva-web-08:v1 ./v1
+
+# Build image v2
+docker build -t eva-web-08:v2 ./v2
+```
+
+**Verifikasi:**
+```bash
+docker images | grep eva-web-08
+```
+
+**Output:**
+```
+eva-web-08   v1    xxxxxxxxxxxx   X minutes ago   XXX MB
+eva-web-08   v2    xxxxxxxxxxxx   X minutes ago   XXX MB
+```
+
+---
+
+### Soal 6 — Menjalankan Kedua Container Serentak
+
+**Deskripsi:** Menjalankan kedua container dalam mode detached dengan nama dan port mapping yang ditentukan.
+
+**Perintah:**
+```bash
+# Jalankan container v1 di port 8080
+docker run -d --name eva-container-08-v1 -p 8080:80 eva-web-08:v1
+
+# Jalankan container v2 di port 8081
+docker run -d --name eva-container-08-v2 -p 8081:80 eva-web-08:v2
+```
+
+**Penjelasan opsi:**
+
+| Opsi | Penjelasan |
+|------|-----------|
+| `-d` | Mode detached (berjalan di background) |
+| `--name` | Memberi nama pada container |
+| `-p 8080:80` | Port host diarahkan ke port container |
+
+---
+
+### Soal 7 — Verifikasi Container & Browser
+
+**Deskripsi:** Menampilkan daftar container yang berjalan dan memverifikasi tampilan di browser.
+
+**Perintah:**
+```bash
+docker ps
+```
+
+**Output:**
+```
+CONTAINER ID   IMAGE            PORTS                  NAMES
+xxxxxxxxxxxx   eva-web-08:v2    0.0.0.0:8081->80/tcp   eva-container-08-v2
+xxxxxxxxxxxx   eva-web-08:v1    0.0.0.0:8080->80/tcp   eva-container-08-v1
+```
+
+**Akses Browser:**
+- http://localhost:8080 → menampilkan `Version: v1 - Lightweight`
+- http://localhost:8081 → menampilkan `Version: v2 - Full System`
+
+---
+
+### Soal 8 — Docker Volume pada Container v1
+
+**Deskripsi:** Menghubungkan folder `eva-project/v1` di host ke direktori web server nginx di dalam container v1 menggunakan Docker Volume.
+
+**Perintah:**
+```bash
+# Hentikan dan hapus container v1
+docker stop eva-container-08-v1
+docker rm eva-container-08-v1
+
+# Jalankan ulang v1 dengan volume (Linux/Mac)
+docker run -d --name eva-container-08-v1 -p 8080:80 \
+  -v $(pwd)/v1:/usr/share/nginx/html eva-web-08:v1
+
+# Untuk Windows PowerShell
+docker run -d --name eva-container-08-v1 -p 8080:80 `
+  -v ${PWD}/v1:/usr/share/nginx/html eva-web-08:v1
+```
+
+**Verifikasi (v2 tetap berjalan):**
+```bash
+docker ps
+```
+
+**Penjelasan Volume:**
+
+| Bagian | Penjelasan |
+|--------|-----------|
+| `-v $(pwd)/v1` | Folder v1 di host (komputer lokal) |
+| `:/usr/share/nginx/html` | Di-mount ke direktori nginx di container |
+| Efek | Perubahan file di host langsung terlihat di container |
+
+---
+
+### Soal 9 — Membuktikan Docker Volume Bekerja
+
+**Deskripsi:** Mengubah isi `index.html` di host dan membuktikan perubahan langsung terlihat di browser tanpa rebuild image.
+
+**Edit file di host:**
+```bash
+cat > eva-project/v1/index.html << 'EOF'
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v1 - Lightweight</p>
+<p>Status: Unit-02 Launch Successful</p>
+</body>
+</html>
+EOF
+```
+
+**Verifikasi:**
+```bash
+cat eva-project/v1/index.html
+```
+
+**Hasil di Browser (http://localhost:8080):**
+```
+EVANGELION STATUS SYSTEM
+Unit-02 Pilot: Asuka Langley Soryu
+Version: v1 - Lightweight
+Status: Unit-02 Launch Successful   ← muncul tanpa rebuild!
+```
+
+> ✅ Perubahan langsung terlihat tanpa perlu `docker build` ulang — inilah keunggulan Docker Volume.
+
+---
+
+### Soal 10 — Masuk ke Container v2 dengan `exec`
+
+**Deskripsi:** Masuk ke dalam container v2, menampilkan isi `index.html`, dan memverifikasi instalasi nginx.
+
+**Masuk ke container:**
+```bash
+docker exec -it eva-container-08-v2 bash
+```
+
+**Di dalam container — tampilkan index.html:**
+```bash
+cat /var/www/html/index.html
+```
+
+**Output:**
+```html
+<html>
+<body>
+<h1>EVANGELION STATUS SYSTEM</h1>
+<p>Unit-02 Pilot: Asuka Langley Soryu</p>
+<p>Version: v2 - Full System</p>
+</body>
+</html>
+```
+
+**Di dalam container — verifikasi nginx:**
+```bash
+nginx -v
+```
+
+**Output:**
+```
+nginx version: nginx/1.xx.x
+```
+
+**Keluar dari container:**
+```bash
+exit
+```
+
+---
+
+## 📊 Ringkasan Pengerjaan
+
+| Soal | Task | Tools |
+|------|------|-------|
+| 1 | Inisialisasi struktur folder | `mkdir` |
+| 2 | Membuat file `index.html` v1 & v2 | `cat` |
+| 3 | Dockerfile v1 (`nginx:latest`) | Dockerfile |
+| 4 | Dockerfile v2 (`ubuntu:latest` + nginx manual) | Dockerfile |
+| 5 | Build kedua Docker image | `docker build` |
+| 6 | Menjalankan kedua container serentak | `docker run` |
+| 7 | Verifikasi container & browser | `docker ps` |
+| 8 | Docker Volume pada container v1 | `docker run -v` |
+| 9 | Membuktikan volume bekerja tanpa rebuild | Edit file host |
+| 10 | Masuk container v2 dengan exec | `docker exec` |
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+- **Docker Desktop**
+- **nginx:latest** — Web server ringan berbasis Alpine
+- **ubuntu:latest** — Sistem operasi penuh
+- **Docker Volume** — Sinkronisasi file host ke container
+
+---
+
+## 👥 Informasi Kelompok
+
+| | |
+|---|---|
+| **Kelompok** | 08 |
+| **Mata Kuliah** | Komputasi Awan |
+| **Semester** | 4 |
 # Soal 2
 Nomer 2 ini menyiapkan lingkungan database server berbasis container Docker yang berjalan di atas sistem operasi Debian 10. Server database ini digunakan oleh tim riset NERV untuk menyimpan dan mengelola data para pilot Evangelion.
 
